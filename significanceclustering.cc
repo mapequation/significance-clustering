@@ -22,7 +22,8 @@ int main(int argc,char *argv[]){
   double conf = 0.95;
   string partitionsFileName = "noname";
   string weightsFileName = "noname";
-  string outFileName = "noname";
+  string nodeOutFileName = "noname";
+  string moduleOutFileName = "noname";
 
   int argNr = 1;
   while(argNr < argc){
@@ -55,8 +56,12 @@ int main(int argc,char *argv[]){
         partitionsFileName = to_string(argv[argNr]);
         argNr++;
       }
-      else if(outFileName == "noname"){
-        outFileName = to_string(argv[argNr]);
+      else if(nodeOutFileName == "noname"){
+        nodeOutFileName = to_string(argv[argNr]);
+        argNr++;
+      }
+      else if(moduleOutFileName == "noname"){
+        moduleOutFileName = to_string(argv[argNr]);
         argNr++;
       }
       else{
@@ -70,8 +75,12 @@ int main(int argc,char *argv[]){
     cout << "No partitions file provided." << endl << CALL_SYNTAX;
     exit(-1);
   }
-  else if(outFileName == "noname"){
-     cout << "No out file provided." << endl << CALL_SYNTAX;
+  else if(nodeOutFileName == "noname"){
+     cout << "No node out file provided." << endl << CALL_SYNTAX;
+     exit(-1);
+  }
+  else if(moduleOutFileName == "noname"){
+     cout << "No module out file provided." << endl << CALL_SYNTAX;
      exit(-1);
   }
 
@@ -83,7 +92,7 @@ int main(int argc,char *argv[]){
     cout << "-->No weights file provided. Using uniform weights of nodes in signifificance clustering." << endl;
   else
     cout << "-->Using weights of nodes in significance clustering from file: " << weightsFileName << endl;
-  cout << "-->Writing results to file: " << outFileName << endl;
+  cout << "-->Writing results to files: " << nodeOutFileName << " and " << moduleOutFileName << endl;
   
   int Nsamples = 0;
   vector<int > rawPartition;
@@ -115,7 +124,7 @@ int main(int argc,char *argv[]){
   vector<pair<int,int> > mergers;
   findConfModules(treeMap,bootPartitions,significantVec,mergers,conf);
 
-  printSignificanceClustering(significantVec,mergers,treeMap,outFileName);
+  printSignificanceClustering(significantVec,mergers,treeMap,nodeOutFileName,moduleOutFileName);
 
   
   // // Print significance map in .smap format for the Map Generator at www.mapequation.org

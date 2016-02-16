@@ -27,11 +27,12 @@ inline std::string to_string (const T& t){
 std::uniform_real_distribution<double> realdist(0,1);
 std::uniform_int_distribution<double> bitdist(0,1);
 
-const string CALL_SYNTAX = "Call: ./sigclu [-s <seed>] [-c <confidencelevel>] [-w <weightsfile>] partitionsfile outfile\n"
+const string CALL_SYNTAX = "Call: ./sigclu [-s <seed>] [-c <confidencelevel>] [-w <weightsfile>] partitionsfile nodeoutfile moduleoutfile\n"
   "seed: Any positive integer.\n"
   "confidencelevel: The confidence as a fraction, default is 0.95.\n"
   "partitionsfile: Each column represents a partition, the first for the raw partition and the remaining for bootstrap partitions. Row number corresponds to node id.\n"
-  "outfile: 1 or 0 if a node does or does not belong to the significant core of its module. moduleId1 moduleId2 means that the significant core of moduleId1 cooccurs with moduleId2 more than a fraction 1 - conf of the samples.\n"
+  "nodeoutfile: 1 or 0 if a node does or does not belong to the significant core of its module.\n"
+  "moduleoutfile: moduleId1 moduleId2 means that the significant core of moduleId1 cooccurs with moduleId2 more than a fraction 1 - conf of the samples.\n"
   "weightsfile: One column for weights of each node.  Row number corresponds to node id.\n";
 
 vector<string> tokenize(const string& str,string& delimiters)
@@ -162,7 +163,7 @@ void readWeightsFile(vector<double> &weights,ifstream &weightsFile){
   cout << "done!" << endl;
 }
 
-void printSignificanceClustering(vector<bool> &significantVec,vector<pair<int,int> > &mergers,multimap<double,treeNode,greater<double> > &treeMap,string outFileName){
+void printSignificanceClustering(vector<bool> &significantVec,vector<pair<int,int> > &mergers,multimap<double,treeNode,greater<double> > &treeMap,string nodeOutFileName,string moduleOutFileName){
 
   int M = treeMap.size();
   vector<int> moduleId = vector<int>(M);
@@ -171,15 +172,22 @@ void printSignificanceClustering(vector<bool> &significantVec,vector<pair<int,in
     moduleId[i] = it->second.moduleId;
 
 
-  ofstream outfile(outFileName);
+  ofstream outfile(nodeOutFileName);
   int Nnodes = significantVec.size();
   outfile << "# 1 or 0 if a node does or does not belong to the significant core of its module." << endl;
+  outfile << "Significant" << endl;
   for(int i=0;i<Nnodes;i++)
     outfile << significantVec[i] << endl;
+  outfile.close();
+
+  outfile.open(moduleOutFileName);
   outfile << "# moduleId1 moduleId2 means that the significant core of moduleId1 cooccurs with moduleId2 more than a fraction 1 - conf of the samples." << endl;
+  outfile << "moduleId1 moduleId2" << endl;
   for(vector<pair<int,int> >::iterator it = mergers.begin(); it != mergers.end(); it++)
     outfile << moduleId[it->first] << " " << moduleId[it->second] << endl;
   outfile.close();
+
+
 }
 
 void generateTreeMap(vector<int> &rawPartition, vector<double> &weights, multimap<double,treeNode,greater<double> > &treeMap){
