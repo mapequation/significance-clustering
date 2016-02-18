@@ -25,7 +25,7 @@ inline std::string to_string (const T& t){
 }
 
 std::uniform_real_distribution<double> realdist(0,1);
-std::uniform_int_distribution<double> bitdist(0,1);
+std::uniform_int_distribution<int> bitdist(0,1);
 
 const string CALL_SYNTAX = "Call: ./sigclu [-s <seed>] [-c <confidencelevel>] [-w <weightsfile>] partitionsfile nodeoutfile moduleoutfile\n"
   "seed: Any positive integer.\n"
@@ -278,7 +278,7 @@ void findConfCore(multimap<double,treeNode,greater<double> > &treeMap,vector<vec
     cout << "module " << i+1 << " (" << moduleId[i] << "): " << flush;
     
     int N = modSortMembers[i].size();
-    std::uniform_int_distribution<double> intNdist(0,N-1);
+    std::uniform_int_distribution<int> intNdist(0,N-1);
     vector<bool> confState = vector<bool>(N);
     vector<bool> maxConfState = vector<bool>(N);
     double maxScore = -1.0;
