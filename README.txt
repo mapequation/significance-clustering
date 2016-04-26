@@ -15,18 +15,19 @@ In a terminal with the GNU Compiler Collection installed,
 just run 'make' in the current directory to compile the
 code with the included Makefile.
 
-Call: ./sigclu [-s <seed>] [-c <confidencelevel>] [-w <weightsfile>] partitionsfile outfile
+Call: ./sigclu [-s <seed>] [-c <confidencelevel>] [-w <weightsfile>] partitionsfile signodeoutfile sigmoduleoutfile
 seed: Any positive integer.
 confidencelevel: The confidence as a fraction, default is 0.95.
 partitionsfile: Each column represents a partition, the first for the raw partition and the remaining for bootstrap partitions. Row number corresponds to node id.
-outfile: 1 or 0 if a node does or does not belong to the significant core of its module. moduleId1 moduleId2 means that the significant core of moduleId1 cooccurs with moduleId2 more than a fraction 1 - conf of the samples.
+nodeoutfile: 1 or 0 if a node does or does not belong to the significant core of its module.
+moduleoutfile: moduleId1 moduleId2 means that the significant core of moduleId1 cooccurs with moduleId2 more than a fraction 1 - conf of the samples.
 weightsfile: One column for weights of each node.  Row number corresponds to node id.
 
 Example:
 
-./sigclu -s 34 -c 0.95 -w weightssample.txt bootsample.txt signodessample.txt
+./sigclu -s 34 -c 0.95 -w weightsfilesample.txt partitionsfilesample.txt sigmoduleoutfilesample.txt
 
-bootsample.txt
+partitionsfilesample.txt
 1 1 1 1 1 1 1 1 1 1 1
 1 1 1 1 1 1 1 1 1 1 1
 1 2 1 2 1 2 1 2 1 2 2
@@ -37,7 +38,7 @@ bootsample.txt
 3 3 3 3 3 3 3 3 3 3 3
 3 3 3 3 3 3 3 3 3 3 3
 
-weightssample.txt
+weightsfilesample.txt
 1
 1
 2
@@ -48,7 +49,7 @@ weightssample.txt
 4
 5
 
-signodessample.txt
+signodeoutfilesample.txt
 # 1 or 0 if a node does or does not belong to the significant core of its module.
 0
 0
@@ -59,5 +60,7 @@ signodessample.txt
 0
 1
 1
+
+sigmoduleoutfilesample.txt
 # moduleId1 moduleId2 means that the significant core of moduleId1 cooccurs with moduleId2 more than a fraction 1 - conf of the samples.
 1 2
