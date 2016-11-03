@@ -97,7 +97,7 @@ void readPartitionsFile(vector<int> &rawPartition,vector<vector<int > > &bootPar
   cout << "with 1 + " << NbootSamples << " partitions " << flush;
 
   // Count remaining nodes
-  while(getline(partitionsFile,line) != 0)
+  while(getline(partitionsFile,line))
     Nnodes++;
   cout << "of " << Nnodes << " nodes..." << flush;
 
@@ -110,7 +110,7 @@ void readPartitionsFile(vector<int> &rawPartition,vector<vector<int > > &bootPar
 
   // Read partitions data    
   int nodeNr = 0;
-  while(getline(partitionsFile,line) != 0){
+  while(getline(partitionsFile,line)){
     istringstream read(line);
     read >> buf;
     rawPartition[nodeNr] = atoi(buf.c_str());
@@ -141,7 +141,7 @@ void readWeightsFile(vector<double> &weights,ifstream &weightsFile){
 
   double totWeight = 0.0;
   int nodeNr = 0;
-  while(getline(weightsFile,line) != 0){
+  while(getline(weightsFile,line)){
     istringstream read(line);
     read >> buf;
     weights[nodeNr] = atof(buf.c_str());
