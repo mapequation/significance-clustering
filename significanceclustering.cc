@@ -102,7 +102,15 @@ int main(int argc,char *argv[]){
   int NbootSamples = 0;
 
   std::mt19937 mtrand(seed);
-  ifstream partitionsFile(partitionsFileName);
+  ifstream partitionsFile;
+  partitionsFile.exceptions(ifstream::failbit);
+  try {
+    partitionsFile.open(partitionsFileName);
+  }
+  catch (const std::exception& e) {
+    cout << "Could not open " << partitionsFileName << ", no such file." << endl;
+     exit(-1);
+  }
 
   // Read partitions file
   readPartitionsFile(rawPartition,bootPartitions,partitionsFile,Nnodes,NbootSamples);
