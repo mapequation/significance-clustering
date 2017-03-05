@@ -97,8 +97,9 @@ void readPartitionsFile(vector<int> &rawPartition,vector<vector<int > > &bootPar
   cout << "with 1 + " << NbootSamples << " partitions " << flush;
 
   // Count remaining nodes
-  while(getline(partitionsFile,line))
+  while(getline(partitionsFile,line)){
     Nnodes++;
+  }
   cout << "of " << Nnodes << " nodes..." << flush;
 
   rawPartition = vector<int>(Nnodes);

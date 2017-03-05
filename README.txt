@@ -25,7 +25,7 @@ weightsfile: One column for weights of each node.  Row number corresponds to nod
 
 Example:
 
-./sigclu -s 34 -c 0.95 -w weightsfilesample.txt partitionsfilesample.txt sigmoduleoutfilesample.txt
+./sigclu -s 34 -c 0.95 -w weightsfilesample.txt partitionsfilesample.txt signodeoutfilesample.txt sigmoduleoutfilesample.txt
 
 partitionsfilesample.txt
 1 1 1 1 1 1 1 1 1 1 1

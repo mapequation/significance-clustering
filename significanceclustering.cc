@@ -103,7 +103,7 @@ int main(int argc,char *argv[]){
 
   std::mt19937 mtrand(seed);
   ifstream partitionsFile;
-  partitionsFile.exceptions(ifstream::failbit);
+  // partitionsFile.exceptions(ifstream::failbit);
   try {
     partitionsFile.open(partitionsFileName);
   }
