@@ -4,7 +4,7 @@ CXX  = g++
 LINK = $(CXX)
 # -O3 -funroll-loops -mmmx
 #CXXFLAGS = -Wall -g 
-CXXFLAGS = -std=c++11 -Wall -O3 -funroll-loops -pipe
+CXXFLAGS = -std=gnu++98 -Wall -O3 -funroll-loops -pipe
 LFLAGS = -lm
 
 

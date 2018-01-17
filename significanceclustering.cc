@@ -127,7 +127,7 @@ int main(int argc,char *argv[]){
   generateTreeMap(rawPartition,weights,treeMap);
 
   // Calculate significance clusters
-  vector<bool> significantVec = vector<bool>(Nnodes);
+  vector<pair<bool,double> > significantVec(Nnodes);
   findConfCore(treeMap,bootPartitions,significantVec,conf,mtrand);
   vector<pair<int,int> > mergers;
   findConfModules(treeMap,bootPartitions,significantVec,mergers,conf);
