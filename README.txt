@@ -50,16 +50,17 @@ weightsfilesample.txt
 5
 
 signodeoutfilesample.txt
-# 1 or 0 if a node does or does not belong to the significant core of its module.
-0
-0
-1
-0
-1
-1
-0
-1
-1
+# First column: 1 in significant core, 0 otherwise. Second column: the relative co-clustering with significant core nodes over all bootstrap clusterings
+Significant SignificantScore
+0 0.4
+0 0.4
+1 1
+0 0.6
+1 1
+1 1
+0 0
+1 1
+1 1
 
 sigmoduleoutfilesample.txt
 # moduleId1 moduleId2 means that the significant core of moduleId1 cooccurs with moduleId2 more than a fraction 1 - conf of the samples.

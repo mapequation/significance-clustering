@@ -1,2 +1,3 @@
 # moduleId1 moduleId2 means that the significant core of moduleId1 cooccurs with moduleId2 more than a fraction 1 - conf of the samples.
 moduleId1 moduleId2
+1 2
