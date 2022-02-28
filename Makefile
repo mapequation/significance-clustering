@@ -1,12 +1,7 @@
-# Various flags
-
 CXX  = g++
 LINK = $(CXX)
-# -O3 -funroll-loops -mmmx
-#CXXFLAGS = -Wall -g 
-CXXFLAGS = -std=gnu++11 -Wall -O3 -funroll-loops -pipe
+CXXFLAGS = -std=gnu++14 -Wall -O3 -Wall -Wextra
 LFLAGS = -lm
-
 
 TARGET  = sigclu
 
@@ -28,7 +23,3 @@ distclean:
 
 # Compile and dependency
 $(OBJECTS): $(HEADER) Makefile
-
-
-
-
