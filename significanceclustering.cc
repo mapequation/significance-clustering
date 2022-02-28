@@ -97,13 +97,6 @@ int main(int argc, char *argv[]) {
 
   cout << "-->Writing results to files: " << nodeOutFileName << " and " << moduleOutFileName << '\n';
 
-  vector<int> rawPartition;
-  vector<vector<int>> bootPartitions;
-
-  int Nnodes = 0;
-  int NbootSamples = 0;
-
-  std::mt19937 mtrand(seed);
   ifstream partitionsFile;
 
   try {
@@ -113,28 +106,32 @@ int main(int argc, char *argv[]) {
     exit(-1);
   }
 
+  vector<int> rawPartition;
+  vector<vector<int>> bootPartitions;
+  int Nnodes = 0;
+  int NbootSamples = 0;
+
   // Read partitions file
-  readPartitionsFile(rawPartition, bootPartitions, partitionsFile, Nnodes, NbootSamples);
+  readPartitionsFile(partitionsFile, rawPartition, bootPartitions, Nnodes, NbootSamples);
 
   vector<double> weights(Nnodes, 1.0 / Nnodes);
   if (weightsFileName != "noname") {
     // Read wights from file if provided
     ifstream weightsFile(weightsFileName);
-    readWeightsFile(weights, weightsFile);
+    readWeightsFile(weightsFile, weights);
   }
 
   // Store modules by weight and nodes in modules by weight
-  multimap<double, TreeNode, greater<double>> treeMap;
-  generateTreeMap(rawPartition, weights, treeMap);
+  auto treeMap = generateTreeMap(rawPartition, weights);
+
+  std::mt19937 mtrand(seed);
 
   // Calculate significance clusters
-  vector<pair<bool, double>> significantVec(Nnodes);
   // find core in each module
-  findConfCore(treeMap, bootPartitions, significantVec, conf, mtrand);
-  vector<pair<int, int>> mergers;
-  // for cores to be significant,
-  // modules should significantly stand alone
-  findConfModules(treeMap, bootPartitions, significantVec, mergers, conf);
+  auto significantVec = findConfCore(treeMap, bootPartitions, Nnodes, conf, mtrand);
+
+  // For cores to be significant, modules should significantly stand alone
+  auto mergers = findConfModules(treeMap, bootPartitions, significantVec, conf);
 
   printSignificanceClustering(significantVec, mergers, treeMap, nodeOutFileName, moduleOutFileName);
 }

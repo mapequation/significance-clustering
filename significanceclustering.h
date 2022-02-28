@@ -31,9 +31,9 @@ public:
   multimap<double, pair<int, string>, greater<double>> members;
 };
 
-void readPartitionsFile(vector<int> &rawPartition,
+void readPartitionsFile(ifstream &partitionsFile,
+                        vector<int> &rawPartition,
                         vector<vector<int>> &bootPartitions,
-                        ifstream &partitionsFile,
                         int &Nnodes,
                         int &NbootSamples) {
   cout << "Reading partitions file " << flush;
@@ -78,11 +78,12 @@ void readPartitionsFile(vector<int> &rawPartition,
     }
     nodeNr++;
   }
+
   partitionsFile.close();
   cout << "done!\n";
 }
 
-void readWeightsFile(vector<double> &weights, ifstream &weightsFile) {
+void readWeightsFile(ifstream &weightsFile, vector<double> &weights) {
   cout << "Reading weight file " << flush;
 
   string line;
@@ -113,27 +114,28 @@ void readWeightsFile(vector<double> &weights, ifstream &weightsFile) {
   cout << "done!\n";
 }
 
-void printSignificanceClustering(vector<pair<bool, double>> &significantVec,
-                                 vector<pair<int, int>> &mergers,
-                                 multimap<double, TreeNode, greater<double>> &treeMap,
+void printSignificanceClustering(const vector<pair<bool, double>> &significantVec,
+                                 const vector<pair<int, int>> &mergers,
+                                 const multimap<double, TreeNode, greater<double>> &treeMap,
                                  const string &nodeOutFileName,
                                  const string &moduleOutFileName) {
   int M = treeMap.size();
   auto moduleId = vector<int>(M);
   int i = 0;
-  for (auto it = treeMap.begin(); it != treeMap.end(); it++, i++)
-    moduleId[i] = it->second.moduleId;
+  for (const auto &it : treeMap) {
+    moduleId[i++] = it.second.moduleId;
+  }
 
   ofstream outfile(nodeOutFileName);
-  int Nnodes = significantVec.size();
 
   outfile << "# First column: 1 in significant core, 0 otherwise. Second "
              "column: the relative co-clustering with significant core nodes "
              "over all bootstrap clusterings\n";
   outfile << "Significant SignificantScore\n";
 
-  for (int i = 0; i < Nnodes; i++)
-    outfile << significantVec[i].first << " " << significantVec[i].second << '\n';
+  for (auto &[core, coClustering] : significantVec) {
+    outfile << core << ' ' << coClustering << '\n';
+  }
 
   outfile.close();
 
@@ -143,15 +145,16 @@ void printSignificanceClustering(vector<pair<bool, double>> &significantVec,
              "samples.\n";
   outfile << "moduleId1 moduleId2\n";
 
-  for (auto &merger : mergers)
+  for (auto &merger : mergers) {
     outfile << moduleId[merger.first] << " " << moduleId[merger.second] << '\n';
+  }
 
   outfile.close();
 }
 
-void generateTreeMap(vector<int> &rawPartition,
-                     vector<double> &weights,
-                     multimap<double, TreeNode, greater<double>> &treeMap) {
+multimap<double, TreeNode, greater<double>> generateTreeMap(vector<int> &rawPartition, vector<double> &weights) {
+  multimap<double, TreeNode, greater<double>> treeMap;
+
   int Nnodes = rawPartition.size();
   map<int, double> moduleWeights;
   map<int, vector<int>> moduleMembers;
@@ -176,13 +179,17 @@ void generateTreeMap(vector<int> &rawPartition,
           make_pair(modM_it->second[j], to_string(modM_it->second[j]))));
     }
   }
+
+  return treeMap;
 }
 
-void findConfCore(multimap<double, TreeNode, greater<double>> &treeMap,
-                  vector<vector<int>> &bootPartitions,
-                  vector<pair<bool, double>> &significantVec,
-                  double conf,
-                  std::mt19937 &mtrand) {
+vector<pair<bool, double>> findConfCore(const multimap<double, TreeNode, greater<double>> &treeMap,
+                                        const vector<vector<int>> &bootPartitions,
+                                        int Nnodes,
+                                        double conf,
+                                        std::mt19937 &mtrand) {
+  vector<pair<bool, double>> significantVec(Nnodes);
+
   double epsilon = 1.0e-5;
 
   int Nboots = bootPartitions.size();
@@ -196,12 +203,13 @@ void findConfCore(multimap<double, TreeNode, greater<double>> &treeMap,
   auto moduleId = vector<int>(M);
 
   auto modSortMembers = vector<vector<int>>(M);
-  int i = 0;
 
+  int i = 0;
   for (auto &it : treeMap) {
     moduleId[i] = it.second.moduleId;
     int Nmem = it.second.members.size();
     modSortMembers[i] = vector<int>(Nmem);
+
     int j = 0;
     for (auto &member : it.second.members) {
       int mem = member.second.first;
@@ -210,6 +218,7 @@ void findConfCore(multimap<double, TreeNode, greater<double>> &treeMap,
       moduleSize[i] += size[mem];
       j++;
     }
+
     i++;
   }
 
@@ -222,14 +231,12 @@ void findConfCore(multimap<double, TreeNode, greater<double>> &treeMap,
     auto confState = vector<bool>(N);
     auto maxConfState = vector<bool>(N);
     double maxScore = -1.0;
-
     double confSize = 0.0;
     int confN = 0;
     double maxConfSize = 0.0;
     int maxConfN = 0;
     double score = 0.0;
     int penalty = 0;
-
     double pW = 10.0 * moduleSize[i];
 
     if (N != 1) {
@@ -279,8 +286,7 @@ void findConfCore(multimap<double, TreeNode, greater<double>> &treeMap,
               mapModSizes[k][modNr].first++;
             } else {
               double newSize = size[modSortMembers[i][j]] + mapModSizes[k][modNr].second->first;
-              auto it = sortModSizes[k].insert(mapModSizes[k][modNr].second,
-                                               make_pair(newSize, modNr));
+              auto it = sortModSizes[k].insert(mapModSizes[k][modNr].second, make_pair(newSize, modNr));
               sortModSizes[k].erase(mapModSizes[k][modNr].second);
               mapModSizes[k][modNr].second = it;
               mapModSizes[k][modNr].first++;
@@ -298,12 +304,14 @@ void findConfCore(multimap<double, TreeNode, greater<double>> &treeMap,
       for (int j = 0; j < Nboots; j++) {
         double tmpScore = 0.0;
         int tmpPenalty = 0;
+
         if (!sortModSizes[j].empty()) {
           int modNr = sortModSizes[j].begin()->second;
           tmpScore = sortModSizes[j].begin()->first;
           // penalty is the number of nodes not in biggest field
           tmpPenalty = confN - mapModSizes[j][modNr].first;
         }
+
         scoreRank.insert(make_pair(tmpScore - pW * tmpPenalty, make_pair(tmpPenalty, j)));
         score += tmpScore;
         penalty += tmpPenalty;
@@ -315,10 +323,12 @@ void findConfCore(multimap<double, TreeNode, greater<double>> &treeMap,
         int bootNr = it->second.second;
         double tmpScore = 0.0;
         int tmpPenalty = 0;
+
         if (!sortModSizes[bootNr].empty()) {
           tmpScore = sortModSizes[bootNr].begin()->first;
           tmpPenalty = it->second.first;
         }
+
         score -= tmpScore;
         penalty -= tmpPenalty;
         it++;
@@ -545,13 +555,16 @@ void findConfCore(multimap<double, TreeNode, greater<double>> &treeMap,
       significantVec[modSortMembers[i][j]].first = maxConfState[j];
     }
   }
+
+  return significantVec;
 }
 
-void findConfModules(multimap<double, TreeNode, greater<double>> &treeMap,
-                     vector<vector<int>> &bootPartitions,
-                     vector<pair<bool, double>> &significantVec,
-                     vector<pair<int, int>> &mergers,
-                     double conf) {
+vector<pair<int, int>> findConfModules(const multimap<double, TreeNode, greater<double>> &treeMap,
+                                       const vector<vector<int>> &bootPartitions,
+                                       const vector<pair<bool, double>> &significantVec,
+                                       double conf) {
+  vector<pair<int, int>> mergers;
+
   int M = treeMap.size();
   int N = bootPartitions[0].size();
   int Nboots = bootPartitions.size();
@@ -573,8 +586,9 @@ void findConfModules(multimap<double, TreeNode, greater<double>> &treeMap,
   }
 
   auto coexistCount = vector<vector<int>>(M);
-  for (int i = 0; i < M; i++)
+  for (int i = 0; i < M; i++) {
     coexistCount[i] = vector<int>(Nboots, 0);
+  }
 
   cout << "\nNow calculate number of times two modules are clustered together, "
           "enumerated by size with module id in parenthesis:\n";
@@ -725,4 +739,6 @@ void findConfModules(multimap<double, TreeNode, greater<double>> &treeMap,
   } else {
     cout << "All modules are significantly standalone.\n";
   }
+
+  return mergers;
 }
