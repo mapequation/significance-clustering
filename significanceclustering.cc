@@ -128,10 +128,10 @@ int main(int argc, char *argv[]) {
 
   // Calculate significance clusters
   // find core in each module
-  auto significantVec = findConfCore(treeMap, bootPartitions, Nnodes, conf, mtrand);
+  auto significants = findConfCore(treeMap, bootPartitions, Nnodes, conf, mtrand);
 
   // For cores to be significant, modules should significantly stand alone
-  auto mergers = findConfModules(treeMap, bootPartitions, significantVec, conf);
+  auto mergers = findConfModules(treeMap, bootPartitions, significants, conf);
 
-  printSignificanceClustering(significantVec, mergers, treeMap, nodeOutFileName, moduleOutFileName);
+  printSignificanceClustering(significants, mergers, treeMap, nodeOutFileName, moduleOutFileName);
 }
