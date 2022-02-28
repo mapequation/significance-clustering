@@ -29,7 +29,7 @@ struct Module {
   using NodeId = int;
   using NodeWeight = double;
   int moduleId{};
-  multimap<NodeWeight, NodeId, greater<double>> nodes;
+  multimap<NodeWeight, NodeId, greater<>> nodes;
 };
 
 void readPartitionsFile(ifstream &partitionsFile,
@@ -67,17 +67,17 @@ void readPartitionsFile(ifstream &partitionsFile,
   partitionsFile.seekg(0, ios::beg);
 
   // Read partitions data
-  int nodeNr = 0;
+  auto node = 0u;
   while (getline(partitionsFile, line)) {
     istringstream read(line);
     read >> buf;
-    rawPartition[nodeNr] = atoi(buf.c_str());
-    int i = 0;
+    rawPartition[node] = atoi(buf.c_str());
+    auto partition = 0u;
     while (read >> buf) {
-      bootPartitions[i][nodeNr] = atoi(buf.c_str());
-      i++;
+      bootPartitions[partition][node] = atoi(buf.c_str());
+      partition++;
     }
-    nodeNr++;
+    node++;
   }
 
   partitionsFile.close();
@@ -91,33 +91,35 @@ void readWeightsFile(ifstream &weightsFile, vector<double> &weights) {
   string buf;
 
   double totWeight = 0.0;
-  int nodeNr = 0;
+  auto node = 0u;
   while (getline(weightsFile, line)) {
     istringstream read(line);
     read >> buf;
-    weights[nodeNr] = atof(buf.c_str());
-    totWeight += weights[nodeNr];
-    nodeNr++;
+    auto weight = atof(buf.c_str());
+    weights[node] = weight;
+    totWeight += weight;
+    node++;
   }
 
   cout << "with total weight " << totWeight << ", normalizing to 1..." << flush;
-  int Nnodes = weights.size();
-  if (Nnodes != nodeNr) {
-    cout << nodeNr << "nodes in weights file, expecting " << Nnodes
+  auto numNodes = weights.size();
+  if (numNodes != node) {
+    cout << node << "nodes in weights file, expecting " << numNodes
          << " from partitions file, exiting...\n";
     abort();
   }
 
   // Normalize to 1
-  for (int i = 0; i < nodeNr; i++)
-    weights[i] /= totWeight;
+  for (auto &weight : weights) {
+    weight /= totWeight;
+  }
 
   cout << "done!\n";
 }
 
 void printSignificanceClustering(const vector<pair<bool, double>> &significantVec,
                                  const vector<pair<int, int>> &mergers,
-                                 const multimap<double, Module, greater<double>> &treeMap,
+                                 const multimap<double, Module, greater<>> &treeMap,
                                  const string &nodeOutFileName,
                                  const string &moduleOutFileName) {
   int M = treeMap.size();
@@ -153,8 +155,8 @@ void printSignificanceClustering(const vector<pair<bool, double>> &significantVe
   outfile.close();
 }
 
-multimap<double, Module, greater<double>> generateTreeMap(vector<int> &rawPartition, vector<double> &weights) {
-  multimap<double, Module, greater<double>> modules;
+multimap<double, Module, greater<>> generateTreeMap(vector<int> &rawPartition, vector<double> &weights) {
+  multimap<double, Module, greater<>> modules;
 
   map<int, double> moduleWeights;
   map<int, vector<int>> moduleMembers;
@@ -185,7 +187,7 @@ multimap<double, Module, greater<double>> generateTreeMap(vector<int> &rawPartit
   return modules;
 }
 
-vector<pair<bool, double>> findConfCore(const multimap<double, Module, greater<double>> &treeMap,
+vector<pair<bool, double>> findConfCore(const multimap<double, Module, greater<>> &treeMap,
                                         const vector<vector<int>> &bootPartitions,
                                         int Nnodes,
                                         double conf,
@@ -257,14 +259,14 @@ vector<pair<bool, double>> findConfCore(const multimap<double, Module, greater<d
       // Initiate weights of module assignments
 
       // Keep track of the sizes order of modules
-      auto sortModSizes = vector<multimap<double, int, greater<double>>>(numBootstrapPartitions);
+      auto sortModSizes = vector<multimap<double, int, greater<>>>(numBootstrapPartitions);
 
       // Keep track of which modules that are included
-      auto mapModSizes = vector<vector<pair<int, multimap<double, int, greater<double>>::iterator>>>(numBootstrapPartitions);
+      auto mapModSizes = vector<vector<pair<int, multimap<double, int, greater<>>::iterator>>>(numBootstrapPartitions);
       vector<vector<pair<int, double>>> bestMapModSizes(numBootstrapPartitions);
 
       for (int j = 0; j < numBootstrapPartitions; j++) {
-        mapModSizes[j] = vector<pair<int, multimap<double, int, greater<double>>::iterator>>(maxModNr);
+        mapModSizes[j] = vector<pair<int, multimap<double, int, greater<>>::iterator>>(maxModNr);
         bestMapModSizes[j] = vector<pair<int, double>>(maxModNr);
         for (int k = 0; k < maxModNr; k++) {
           mapModSizes[j][k].first = 0;
@@ -345,7 +347,7 @@ vector<pair<bool, double>> findConfCore(const multimap<double, Module, greater<d
 
       bool search = true;
       while (search) {
-        double T = 1.0;
+        double temperature = 1.0;
 
         do {
           attempts = 0;
@@ -369,7 +371,8 @@ vector<pair<bool, double>> findConfCore(const multimap<double, Module, greater<d
               for (int k = 0; k < numBootstrapPartitions; k++) {
                 int modNr = bootPartitions[k][nodeNr];
                 double tmpScore = sortModSizes[k].begin()->first;
-                int tmpPenalty = newConfN - mapModSizes[k][sortModSizes[k].begin()->second].first;
+                int i1 = sortModSizes[k].begin()->second;
+                int tmpPenalty = newConfN - mapModSizes[k][i1].first;
 
                 if (mapModSizes[k][modNr].second == sortModSizes[k].begin()) {
                   tmpScore -= sizes[nodeNr];
@@ -378,11 +381,12 @@ vector<pair<bool, double>> findConfCore(const multimap<double, Module, greater<d
                   if (sortModSizes[k].size() > 1) {
                     auto it = sortModSizes[k].begin();
                     it++;
+                    auto &[score, second] = *it;
 
                     // Check if second in ranking is larger
-                    if (it->first > tmpScore) {
-                      tmpScore = it->first;
-                      tmpPenalty = newConfN - mapModSizes[k][it->second].first;
+                    if (score > tmpScore) {
+                      tmpScore = score;
+                      tmpPenalty = newConfN - mapModSizes[k][second].first;
                     }
                   }
                 }
@@ -452,7 +456,7 @@ vector<pair<bool, double>> findConfCore(const multimap<double, Module, greater<d
               it++;
             }
 
-            if (exp(((newScore - pW * newPenalty) - (score - pW * penalty)) / T) > realdist(mtrand)) {
+            if (exp(((newScore - pW * newPenalty) - (score - pW * penalty)) / temperature) > realdist(mtrand)) {
               // Update data structures
               if (confState[flip]) {
                 // Remove one node from confident subset
@@ -521,8 +525,7 @@ vector<pair<bool, double>> findConfCore(const multimap<double, Module, greater<d
             }
           }
 
-          T *= 0.99;
-
+          temperature *= 0.99;
         } while (switches > 0);
 
         if (maxScore > 0.0)
@@ -561,7 +564,7 @@ vector<pair<bool, double>> findConfCore(const multimap<double, Module, greater<d
   return significants;
 }
 
-vector<pair<int, int>> findConfModules(const multimap<double, Module, greater<double>> &treeMap,
+vector<pair<int, int>> findConfModules(const multimap<double, Module, greater<>> &treeMap,
                                        const vector<vector<int>> &bootPartitions,
                                        const vector<pair<bool, double>> &significants,
                                        double conf) {

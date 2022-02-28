@@ -1,6 +1,6 @@
 CXX  = g++
 LINK = $(CXX)
-CXXFLAGS = -std=gnu++17 -Wall -O3 -Wall -Wextra
+CXXFLAGS = -std=c++17 -Wall -O3 -Wall -Wextra
 LFLAGS = -lm
 
 TARGET  = sigclu
